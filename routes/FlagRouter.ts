@@ -1,51 +1,76 @@
-import express, { Router } from "express";
+import { Db } from "mongodb";
+import express, { Request, Response, Router } from "express";
 
 export type Flag = {
   name: string;
   enabled: boolean;
 };
 
-const flags: {[name: string]: Flag} = {};
+const flags: { [name: string]: Flag } = {};
 
-export function initializeFlagRouter() {
+export type FlagRouterOptions = {
+  db: Db;
+};
+
+export function initializeFlagRouter({ db }: FlagRouterOptions) {
+  const Flag = db.collection("flags");
   const router = Router();
 
-  router.get("", (req, res, next) => {
-    res.json({
-      success: true,
-      body: flags
-    });
+  router.get("", async (req, res, next) => {
+    try {
+      const flags = await Flag.find().toArray();
+
+      res.json({
+        success: true,
+        body: flags,
+      });
+    } catch (err) {
+      res.json({ success: false, errors: [err] });
+    }
   });
 
   const adminRouter = Router();
 
   router.use("/admin", adminRouter);
 
-  adminRouter.use(express.static('public'))
+  adminRouter.use(express.static("public"));
 
-  adminRouter.post("", (req, res, next) => {
-    const name = req.body.name
-    flags[name] = {
-      name,
-      enabled: req.body.enabled === true ? true : false,
+  adminRouter.post("", async (req, res, next) => {
+    try {
+      const name = req.body.name;
+
+      await Flag.insertOne({
+        name,
+        enabled: req.body.enabled === true ? true : false,
+      });
+
+      res.json({
+        success: true,
+      });
+    } catch (err) {
+      res.json({ success: false, errors: [err] });
     }
-
-    res.json({
-      success: true,
-    });
   });
 
-  adminRouter.put("/:name", (req, res, next) => {
-    const name = req.params.name;
-    const flagToUpdate = flags[name]
+  adminRouter.put("/:name", async (req, res, next) => {
+    try {
+      const name = req.params.name;
 
-    if (flagToUpdate) {
-      flagToUpdate.enabled = req.body.enabled === true ? true : false
+      await Flag.updateOne(
+        {
+          name,
+        },
+        {
+          enabled: req.body.enabled === true ? true : false,
+        }
+      );
+
+      res.json({
+        success: true,
+      });
+    } catch (err) {
+      res.json({ success: false, errors: [err] });
     }
-
-    res.json({
-      success: true,
-    });
   });
 
   return router;
