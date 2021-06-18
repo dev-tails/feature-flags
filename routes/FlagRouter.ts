@@ -5,7 +5,7 @@ export type Flag = {
   enabled: boolean;
 };
 
-const flags: Flag[] = [];
+const flags: {[name: string]: Flag} = {};
 
 export function initializeFlagRouter() {
   const router = Router();
@@ -24,10 +24,11 @@ export function initializeFlagRouter() {
   adminRouter.use(express.static('public'))
 
   adminRouter.post("", (req, res, next) => {
-    flags.push({
-      name: req.body.name,
+    const name = req.body.name
+    flags[name] = {
+      name,
       enabled: req.body.enabled === true ? true : false,
-    });
+    }
 
     res.json({
       success: true,
@@ -36,7 +37,7 @@ export function initializeFlagRouter() {
 
   adminRouter.put("/:name", (req, res, next) => {
     const name = req.params.name;
-    const flagToUpdate = flags.find((flag) => flag.name === name);
+    const flagToUpdate = flags[name]
 
     if (flagToUpdate) {
       flagToUpdate.enabled = req.body.enabled === true ? true : false
