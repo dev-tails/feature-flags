@@ -1,0 +1,39 @@
+<html>
+  <head>
+    <script>
+      document.addEventListener("DOMContentLoaded", function(){
+        const form = document.getElementById("form");
+        const nameInput = document.getElementById("name")
+        const enabledInput = document.getElementById("enabled")
+
+        form.addEventListener("submit", function(e) {
+          e.stopPropagation();
+          e.preventDefault();
+
+          const nameVal = nameInput.value;
+          const enabledVal = enabledInput.checked;
+
+          const flag = {
+            name: nameVal,
+            enabled: enabledVal
+          }
+
+          fetch("/flags/admin/" + nameVal, {
+            method: "PUT",
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(flag)
+          })
+        })
+      });
+    </script>
+  </head>
+  <body>
+    <form id="form">
+    <input id="name"/>
+    <input id="enabled" type="checkbox"/>
+    <button id="update">Update</button>
+  </form>
+  </body>
+</html>
